@@ -20,3 +20,6 @@
 依赖包由sklearn joblib numpy 可以自行百度安装
 
 又一个坑就是M1处理器的MAC电脑在装pip包的时候有很多保错，可以百度搜索安装Conda来托管python
+
+##### Video
+https://www.bilibili.com/video/av840265491
