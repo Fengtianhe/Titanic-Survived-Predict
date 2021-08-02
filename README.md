@@ -13,3 +13,10 @@
 * TitanicIntegrate.py 多种算法聚合训练预测
 * TrainModelExport.py 训练模型导出
 * TrainModelImport.py 训练模型导入
+
+##### Run
+我写的时候使用的是python3.9 
+
+依赖包由sklearn joblib numpy 可以自行百度安装
+
+又一个坑就是M1处理器的MAC电脑在装pip包的时候有很多保错，可以百度搜索安装Conda来托管python
