@@ -17,6 +17,11 @@ rollback.loc[rollback['首笔借款当前是否逾期'] == "是", '首笔借款�
 rollback.loc[rollback['是否首次逾期'] != "是", '是否首次逾期'] = 0
 rollback.loc[rollback['是否首次逾期'] == "是", '是否首次逾期'] = 1
 
+# 显示所有列
+pandas.set_option('display.max_columns', None)
+# 表头不换行
+pandas.set_option('expand_frame_repr', False)
+pandas.set_option('max_colwidth', 60)
 print(rollback.loc[[811]])
 
 # 利用feature_selection计算特征的重要程度
@@ -79,10 +84,10 @@ plt.show()
 
 # %%
 # 查询当前系统所有字体
-from matplotlib.font_manager import FontManager
-
-mpl_fonts = set(f.name for f in FontManager().ttflist)
-
-print('all font list get from matplotlib.font_manager:')
-for f in sorted(mpl_fonts):
-    print('\t' + f)
+# from matplotlib.font_manager import FontManager
+#
+# mpl_fonts = set(f.name for f in FontManager().ttflist)
+#
+# print('all font list get from matplotlib.font_manager:')
+# for f in sorted(mpl_fonts):
+#     print('\t' + f)
