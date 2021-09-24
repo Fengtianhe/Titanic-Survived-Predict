@@ -96,7 +96,7 @@ class MyNet(nn.Module):
         self.opt.zero_grad()
         loss.backward()
         self.opt.step()
-        # print(loss)
+        print(loss)
 
     def test(self, x, y):
         # 测试
@@ -130,9 +130,16 @@ if __name__ == '__main__':
             batch_data = train_data[n * 100: n * 100 + 100]
             batch_label = train_label[n * 100: n * 100 + 100]
             net.train(train_data, train_label)
+
     # 测试模型
     print("测试模型")
     net.test(test_data, test_label)
+
+    # 打印最终的损失值
+    # output = net(train_data)
+    # loss_fun = nn.MSELoss()
+    # loss = loss_fun(output, train_label)
+    # print("最终loss的值 =====> " + str(loss.item()))
 
     print("导出模型")
     torch.save(net.state_dict(), 'model/model.pth')

@@ -9,8 +9,8 @@
 # Mac OS X 操作系统
 # yesterday=$(date -v -1d +%Y%m%d)
 # GNU/Linux操作系统"
-yesterday=$(date -d '1 days ago' +%Y%m%d)
-
+#yesterday=$(date -d '1 days ago' +%Y%m%d)
+yesterday=20210922
 echo "数据日期：$yesterday"
 
 # 训练数据集
@@ -27,9 +27,18 @@ echo "获取python训练程序"
 echo "hadoop fs -get \"/home/hdp_lbg_zhaopin/resultdata/beehive_busertag/consumption_intention/application/train.py\" ./"
 hadoop fs -get "/home/hdp_lbg_zhaopin/resultdata/beehive_busertag/consumption_intention/application/train.py" ./
 
+echo "获取模型文件"
+echo "hadoop fs -get \"/home/hdp_lbg_zhaopin/resultdata/beehive_busertag/consumption_intention/application/MyNet.py\" ./"
+hadoop fs -get "/home/hdp_lbg_zhaopin/resultdata/beehive_busertag/consumption_intention/application/MyNet.py" ./
+hadoop fs -get "/home/hdp_lbg_zhaopin/resultdata/beehive_busertag/consumption_intention/application/processor.py" ./
+
 # 创建模型目录
 echo "创建模型目录"
 mkdir model
+
+echo "将模型复制进模型打包目录"
+cp MyNet.py ./model/
+cp processor.py ./model/
 
 echo "执行python程序"
 python train.py
