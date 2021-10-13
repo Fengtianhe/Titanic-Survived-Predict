@@ -1,9 +1,15 @@
+import logging
+
 import torch
 import torch.nn as nn
 import pandas as pd
 import numpy as np
 import time
+import matplotlib.pyplot as plt
 
+dt = time.strftime('%Y%m%d', time.localtime())
+logging.basicConfig(filename='run_' + str(dt) + '.log', level=logging.INFO)
+logger = logging.getLogger(__name__)
 # 数据表头
 
 cols = ["uid", "consumption_intention", "consumption_intention_origin", "ordinary_info_browse_uv",
@@ -25,17 +31,17 @@ class DataProcessing(object):
         pass
 
     def get_data(self):
-        data_train = pd.read_csv('./train.csv/000000_0', header=None)
+        data_train = pd.read_csv('train.csv/000000_0', header=None)
         print("训练数据量: %d" % data_train.size)
         print("训练维度数量: %d" % len(cols))
         data_train.columns = cols
         # print(data_train.head(10))
         label = data_train[['consumption_intention']]
-        data_test = pd.read_csv('./test.csv/000000_0', header=None)
+        data_test = pd.read_csv('test.csv/000000_0', header=None)
         print("测试数据量: %d" % data_test.size)
         data_test.columns = cols
         # 读取指定列，作为验证预测成功和失败的标识
-        gender = pd.read_csv('./test.csv/000000_0', usecols=[1])
+        gender = pd.read_csv('test.csv/000000_0', usecols=[1])
         return data_train, label, data_test, gender
 
     def data_processing(self, data_):
@@ -71,17 +77,19 @@ class DataProcessing(object):
 # output 就是你隐藏层的神经元个数，
 # 就是你想把100个特征压缩成64个，那output 就是 64 。
 # 你先确认一下 你输入的数据的维度吧，比如你有5000个样本，每个样本的长度是100，input 就是100 ，看你的报错，你的特征数是8 ？ 那input 就是8。
+# https://www.cnblogs.com/wangqinze/p/13424368.html
 class MyNet(nn.Module):
     def __init__(self):
         super(MyNet, self).__init__()
         self.fc = nn.Sequential(
             # nn.Linear(11, 7), # 网上泰坦尼克的方式，用11个维度去预测的
-            nn.Linear(8, 5),
-            nn.Sigmoid(),
-            nn.Linear(5, 5),
-            nn.Sigmoid(),
-            nn.Linear(5, 1),
+            nn.Linear(8, 5),  # 输入层与第一隐层结点数设置，全连接结构
+            nn.ReLU(),  # 第一隐层激活函数采用sigmoid
+            nn.Linear(5, 5),  # 第一隐层与第二隐层结点数设置，全连接结构
+            nn.ReLU(),  # 第一隐层激活函数采用sigmoid
+            nn.Linear(5, 1),  # 第二隐层与输出层层结点数设置，全连接结构
         )
+        # Adam 优化算法是深度学习问题中一种非常流行的选择算法。这是随机梯度下降算法的扩展，但与 SGD 算法不同，Adam 优化器在训练期间并不保持相同的学习速率。
         self.opt = torch.optim.Adam(params=self.parameters(), lr=0.001)
         self.mls = nn.MSELoss()
 
@@ -91,12 +99,12 @@ class MyNet(nn.Module):
 
     def train(self, inputs, y):
         # 训练
-        out = self.forward(inputs)
-        loss = self.mls(out, y)
-        self.opt.zero_grad()
-        loss.backward()
-        self.opt.step()
-        print(loss)
+        self.opt.zero_grad()  # 清除梯度
+        out = self.forward(inputs) # 训练模型
+        loss = self.mls(out, y) # 计算损失
+        loss.backward()  # 计算梯度，误差回传
+        self.opt.step()  # 根据计算的梯度，更新网络中的参数
+        print("损失值 => " + str(loss.data.numpy()))
 
     def test(self, x, y):
         # 测试
@@ -134,12 +142,6 @@ if __name__ == '__main__':
     # 测试模型
     print("测试模型")
     net.test(test_data, test_label)
-
-    # 打印最终的损失值
-    # output = net(train_data)
-    # loss_fun = nn.MSELoss()
-    # loss = loss_fun(output, train_label)
-    # print("最终loss的值 =====> " + str(loss.item()))
 
     print("导出模型")
     torch.save(net.state_dict(), 'model/model.pth')
