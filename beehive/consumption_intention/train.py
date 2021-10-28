@@ -31,17 +31,19 @@ class DataProcessing(object):
         pass
 
     def get_data(self):
-        data_train = pd.read_csv('train.csv/000000_0', header=None)
+        data_train = pd.read_csv('consumption_intention/train.csv/000000_0', header=None)
         print("训练数据量: %d" % data_train.size)
         print("训练维度数量: %d" % len(cols))
         data_train.columns = cols
-        # print(data_train.head(10))
-        label = data_train[['consumption_intention']]
-        data_test = pd.read_csv('test.csv/000000_0', header=None)
+        data_train.pop("uid")
+        data_train.pop("dt")
+        label = data_train.pop("consumption_intention")
+        print(data_train.head(10))
+        data_test = pd.read_csv('consumption_intention/test.csv/000000_0', header=None)
         print("测试数据量: %d" % data_test.size)
         data_test.columns = cols
         # 读取指定列，作为验证预测成功和失败的标识
-        gender = pd.read_csv('test.csv/000000_0', usecols=[1])
+        gender = pd.read_csv('consumption_intention/test.csv/000000_0', usecols=[1])
         return data_train, label, data_test, gender
 
     def data_processing(self, data_):
@@ -100,11 +102,11 @@ class MyNet(nn.Module):
     def train(self, inputs, y):
         # 训练
         self.opt.zero_grad()  # 清除梯度
-        out = self.forward(inputs) # 训练模型
-        loss = self.mls(out, y) # 计算损失
+        out = self.forward(inputs)  # 训练模型
+        loss = self.mls(out, y)  # 计算损失
         loss.backward()  # 计算梯度，误差回传
         self.opt.step()  # 根据计算的梯度，更新网络中的参数
-        print("损失值 => " + str(loss.data.numpy()))
+        # print("损失值 => " + str(loss.data.numpy()))
 
     def test(self, x, y):
         # 测试
@@ -113,14 +115,46 @@ class MyNet(nn.Module):
         count = 0
         out = self.fc(x)
         sum = len(y)
+        # 临界值
+        yz = 0.9
+        # 真正例（TP）:实际上是正例(1)的数据点被标记为正例(1)
+        TP = 0
+        # 假反例（FN）:实际上是正例(1)的数据点被标记为返例(0)
+        FN = 0
+        # 真反例（TN）：实际上是反例的数据点被标记为反例
+        TN = 0
+        # 假正例（FP）：实际上是反例的数据点被标记为正例
+        FP = 0
         for i, j in zip(out, y):
             i = i.detach().numpy()
             j = j.detach().numpy()
             loss = abs((i - j)[0])
+
+            # TP    predict 和 label 同时为1
+            TP += 1 if ((loss < yz) & (j[0] == 1)) else 0
+            # TN    predict 和 label 同时为0
+            TN += 1 if ((loss < yz) & (j[0] == 0)) else 0
+            # FN    predict 0 label 1
+            FN += 1 if ((loss > yz) & (j[0] == 1)) else 0
+            # FP    predict 1 label 0
+            FP += 1 if ((loss > yz) & (j[0] == 0)) else 0
+
             if loss < 0.3:
                 count += 1
+        # 查准率
+        p = TP / (TP + FP)
+        # 召回率
+        r = TP / (TP + FN)
+        F1 = 2 * r * p / (r + p)
+        acc = (TP + TN) / (TP + TN + FP + FN)
         # 误差0.3内的正确率
+        print("临界值：=====> %.6f" % yz)
         print("正确率：=====> %.6f" % (count * 100 / sum))
+        # 召回率recall = tp / (tp + fn)
+        print("召回率：=====> %.6f" % (r * 100))
+        print("查准率：=====> %.6f" % (p * 100))
+        print("F1：=====> %.6f" % (F1 * 100))
+        print("acc：=====> %.6f" % (acc))
 
 
 if __name__ == '__main__':
@@ -132,7 +166,8 @@ if __name__ == '__main__':
     net = MyNet()
     count = 0
     # range中的参数可以调整，多训练几次，用mac电脑训练2次花了30s
-    for i in range(2):
+    for i in range(10):
+        print("训练第%s次" % i)
         # 为了减小电脑压力,分批训练 20000个训练一次  ## 正确的做法应该是用batch
         for n in range(len(train_data) // 50000 + 1):
             batch_data = train_data[n * 100: n * 100 + 100]
@@ -143,7 +178,7 @@ if __name__ == '__main__':
     print("测试模型")
     net.test(test_data, test_label)
 
-    print("导出模型")
-    torch.save(net.state_dict(), 'model/model.pth')
+    # print("导出模型")
+    # torch.save(net.state_dict(), 'model/model.pth')
 
     print('程序耗时：==> %.2fs' % (time.time() - start_time))
